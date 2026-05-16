@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Prayer Times</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  :root{--gold:#f0c040;--gold2:#d4a820;--green:#0d2b0d;--green2:#173d17;--green3:#1f5220;--green4:#2a6b2a;--text:#ffffff;--soft:#8bbf8b}
+  body{font-family:'Nunito',sans-serif;background:var(--green);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  /* Background Islamic Pattern */
+  body::before{content:'';position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;opacity:.04;background-image:repeating-linear-gradient(45deg,#fff 0,#fff 1px,transparent 0,transparent 50%),repeating-linear-gradient(-45deg,#fff 0,#fff 1px,transparent 0,transparent 50%);background-size:20px 20px}
+
+  /* Top gradient glow */
+  body::after{content:'';position:fixed;top:0;left:0;width:100%;height:200px;background:radial-gradient(ellipse at 50% 0%,rgba(240,192,64,.15) 0%,transparent 70%);pointer-events:none}
+
+  .app{padding:18px 15px 30px;max-width:420px;margin:0 auto;position:relative;z-index:1}
+
+  /* HEADER */
+  .header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px}
+  .brand{display:flex;flex-direction:column;gap:4px}
+  .brand-top{display:flex;align-items:center;gap:8px}
+  .brand-top .crescent{font-size:22px;filter:drop-shadow(0 0 8px rgba(240,192,64,.6))}
+  .brand-top h1{font-family:'Cinzel',serif;font-size:17px;color:var(--gold);letter-spacing:2px;font-weight:700}
+  .location-row{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--soft)}
+  .location-row .pin{font-size:12px}
+
+  /* COUNTDOWN BADGE */
+  .countdown-badge{background:var(--green2);border:1.5px solid var(--gold2);border-radius:14px;padding:8px 14px;text-align:center;min-width:100px;box-shadow:0 0 20px rgba(240,192,64,.12)}
+  .cd-label{font-size:9.5px;color:var(--soft);letter-spacing:1.5px;text-transform:uppercase;font-weight:700}
+  .cd-name{font-size:11px;color:var(--gold);font-weight:700;letter-spacing:1px}
+  .cd-time{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:var(--gold);line-height:1.2}
+
+  /* DATE CARD */
+  .date-card{background:var(--green2);border-radius:16px;padding:14px 18px;margin-bottom:16px;border:1px solid rgba(240,192,64,.15);display:flex;justify-content:space-between;align-items:center}
+  .gregorian{font-size:14.5px;font-weight:700;color:#fff}
+  .hijri{font-size:12px;color:var(--gold);margin-top:3px;font-weight:600}
+  .date-icon{font-size:28px;opacity:.7}
+
+  /* PRAYER CARDS */
+  .prayer-list{display:flex;flex-direction:column;gap:10px}
+  .prayer-card{background:var(--green2);border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:13px;border:1.5px solid transparent;transition:all .3s ease;position:relative;overflow:hidden}
+  .prayer-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;border-radius:3px 0 0 3px;transition:.3s}
+  .prayer-card.active{border-color:var(--gold);background:var(--green3);box-shadow:0 0 25px rgba(240,192,64,.15)}
+  .prayer-card.active::before{background:var(--gold)}
+  .prayer-card.next-up{border-color:rgba(240,192,64,.3)}
+  .prayer-card.next-up::before{background:rgba(240,192,64,.5)}
+
+  .p-icon-wrap{width:44px;height:44px;border-radius:50%;background:var(--green3);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;border:1px solid rgba(255,255,255,.06);box-shadow:inset 0 1px 0 rgba(255,255,255,.05)}
+  .prayer-card.active .p-icon-wrap{background:var(--green4);border-color:rgba(240,192,64,.3)}
+
+  .p-info{flex:1}
+  .p-name-en{font-size:16px;font-weight:700;color:#fff}
+  .prayer-card.active .p-name-en{color:var(--gold)}
+  .p-name-ar{font-size:12px;color:var(--soft);font-weight:400;margin-top:1px}
+
+  .p-right{text-align:right}
+  .p-time{font-family:'Cinzel',serif;font-size:17px;font-weight:600;color:#fff;letter-spacing:.5px}
+  .prayer-card.active .p-time{color:var(--gold)}
+  .p-status{font-size:10.5px;margin-top:3px;font-weight:700;letter-spacing:.5px}
+  .status-active{color:#4CAF50}
+  .status-next{color:var(--soft)}
+
+  /* METHOD BADGE */
+  .method-row{text-align:center;margin:16px 0 12px}
+  .method-badge{display:inline-block;background:var(--green2);border:1px solid rgba(240,192,64,.2);border-radius:20px;padding:7px 18px;font-size:11.5px;color:var(--soft)}
+
+  /* REFRESH */
+  .refresh-btn{width:100%;background:linear-gradient(135deg,var(--gold) 0%,var(--gold2) 100%);color:var(--green);border:none;border-radius:14px;padding:14px;font-size:15px;font-weight:800;font-family:'Nunito',sans-serif;cursor:pointer;letter-spacing:.5px;box-shadow:0 4px 20px rgba(240,192,64,.3);margin-top:4px}
+  .refresh-btn:active{transform:scale(.98)}
+
+  /* LOADING */
+  .loading{text-align:center;padding:80px 20px}
+  .spinner{width:52px;height:52px;border:4px solid var(--green3);border-top:4px solid var(--gold);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 20px}
+  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+  .loading p{color:var(--soft);font-size:15px;font-weight:600}
+  .loading .sub{font-size:12px;color:#4a7a4a;margin-top:6px}
+
+  /* ERROR */
+  .error-box{background:#1a0d05;border:1.5px solid #8b4a10;border-radius:16px;padding:20px;text-align:center;margin-bottom:16px}
+  .error-box .err-icon{font-size:32px;margin-bottom:10px}
+  .error-box p{color:#d4884a;font-size:14px;font-weight:600}
+  .error-box .sub{font-size:12px;color:#8b5a30;margin-top:6px}
+
+  /* CITY SEARCH */
+  .city-section{margin-top:16px}
+  .city-label{font-size:13px;color:var(--soft);margin-bottom:8px;font-weight:600}
+  .city-input-row{display:flex;gap:8px}
+  .city-input{flex:1;background:var(--green2);border:1.5px solid rgba(240,192,64,.3);border-radius:12px;padding:12px 14px;color:#fff;font-size:15px;font-family:'Nunito',sans-serif;outline:none}
+  .city-input::placeholder{color:#4a7a4a}
+  .city-input:focus{border-color:var(--gold)}
+  .city-btn{background:var(--gold);color:var(--green);border:none;border-radius:12px;padding:12px 16px;font-size:18px;cursor:pointer;font-weight:800}
+  .divider{text-align:center;color:#3a6a3a;font-size:12px;margin:12px 0;font-weight:600}
+  .popular-cities{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+  .city-chip{background:var(--green2);border:1px solid rgba(240,192,64,.2);border-radius:20px;padding:6px 13px;font-size:12px;color:var(--soft);cursor:pointer;font-family:'Nunito',sans-serif}
+  .city-chip:active{background:var(--green3);color:var(--gold)}
+
+  /* Fade in */
+  .fade-in{animation:fadeIn .5s ease}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- LOADING STATE -->
+  <div id="loadingDiv" class="loading">
+    <div class="spinner"></div>
+    <p>Detecting your location...</p>
+    <p class="sub">Please allow location access</p>
+  </div>
+
+  <!-- ERROR STATE -->
+  <div id="errorDiv" style="display:none">
+    <div class="brand-top" style="margin-bottom:16px">
+      <span class="crescent">☪️</span>
+      <h1 style="font-family:Cinzel,serif;font-size:17px;color:var(--gold);letter-spacing:2px">PRAYER TIMES</h1>
+    </div>
+    <div class="error-box">
+      <div class="err-icon">📍</div>
+      <p>Enter your city to get prayer times</p>
+      <p class="sub">Or allow location permission and try GPS</p>
+    </div>
+    <div class="city-section">
+      <div class="city-label">Search your city:</div>
+      <div class="city-input-row">
+        <input class="city-input" id="cityInput" type="text" placeholder="e.g. Hyderabad, Delhi, Dubai...">
+        <button class="city-btn" onclick="searchCity()">→</button>
+      </div>
+      <div class="divider">— Popular Cities —</div>
+      <div class="popular-cities">
+        <button class="city-chip" onclick="loadCity('Hyderabad','IN')">Hyderabad</button>
+        <button class="city-chip" onclick="loadCity('Delhi','IN')">Delhi</button>
+        <button class="city-chip" onclick="loadCity('Mumbai','IN')">Mumbai</button>
+        <button class="city-chip" onclick="loadCity('Karachi','PK')">Karachi</button>
+        <button class="city-chip" onclick="loadCity('Lahore','PK')">Lahore</button>
+        <button class="city-chip" onclick="loadCity('Dubai','AE')">Dubai</button>
+        <button class="city-chip" onclick="loadCity('London','GB')">London</button>
+        <button class="city-chip" onclick="loadCity('Makkah','SA')">Makkah</button>
+        <button class="city-chip" onclick="loadCity('Dhaka','BD')">Dhaka</button>
+        <button class="city-chip" onclick="loadCity('Riyadh','SA')">Riyadh</button>
+      </div>
+    </div>
+    <div style="margin-top:16px">
+      <button class="refresh-btn" onclick="init()">📡 Use GPS Instead</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="content" style="display:none" class="fade-in">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <div class="brand-top">
+          <span class="crescent">☪️</span>
+          <h1>PRAYER TIMES</h1>
+        </div>
+        <div class="location-row">
+          <span class="pin">📍</span>
+          <span id="cityName">Detecting...</span>
+        </div>
+      </div>
+      <div class="countdown-badge">
+        <div class="cd-label">NEXT</div>
+        <div class="cd-name" id="nextName">-</div>
+        <div class="cd-time" id="cdTime">--:--</div>
+      </div>
+    </div>
+
+    <!-- Date -->
+    <div class="date-card">
+      <div>
+        <div class="gregorian" id="gregDate">-</div>
+        <div class="hijri" id="hijriDate">-</div>
+      </div>
+      <div class="date-icon">📅</div>
+    </div>
+
+    <!-- Prayer List -->
+    <div class="prayer-list" id="prayerList"></div>
+
+    <!-- Method -->
+    <div class="method-row">
+      <span class="method-badge" id="methodBadge">⊞ Loading...</span>
+    </div>
+
+    <!-- Refresh -->
+    <button class="refresh-btn" onclick="init()">🔄 Refresh Location</button>
+
+  </div>
+</div>
+
+<script>
+const PRAYERS = [
+  {key:'Fajr',   ar:'الفجر',  icon:'🌙'},
+  {key:'Dhuhr',  ar:'الظهر',  icon:'☀️'},
+  {key:'Asr',    ar:'العصر',  icon:'⛅'},
+  {key:'Maghrib',ar:'المغرب', icon:'🌇'},
+  {key:'Isha',   ar:'العشاء', icon:'🌃'}
+];
+
+const DAYS   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+const METHODS = {
+  IN:{id:1, name:'All India Muslim Personal Law Board'},
+  PK:{id:1, name:'University of Karachi'},
+  BD:{id:1, name:'University of Karachi'},
+  SA:{id:4, name:'Umm Al-Qura (Makkah)'},
+  US:{id:2, name:'ISNA (North America)'},
+  CA:{id:2, name:'ISNA (North America)'},
+  GB:{id:3, name:'Muslim World League'},
+  MY:{id:3, name:'Muslim World League'},
+  EG:{id:5, name:'Egyptian Authority'},
+  IR:{id:7, name:'Institute of Tehran'},
+  TR:{id:13,name:'Diyanet (Turkey)'}
+};
+
+let timerInterval = null;
+let nextPrayerTime = null;
+
+function show(id){
+  ['loadingDiv','errorDiv','content'].forEach(d=>document.getElementById(d).style.display='none');
+  document.getElementById(id).style.display='block';
+}
+
+function init(){
+  show('loadingDiv');
+  if(timerInterval) clearInterval(timerInterval);
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>loadData(pos.coords.latitude, pos.coords.longitude),
+      ()=>fallbackIP(),
+      {timeout:12000, maximumAge:300000}
+    );
+  } else { fallbackIP(); }
+}
+
+function fallbackIP(){
+  fetch('https://ipapi.co/json/')
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.latitude) loadData(d.latitude,d.longitude,d.city+', '+d.country_name,d.country_code);
+      else fallbackToManual();
+    })
+    .catch(()=>fallbackToManual());
+}
+
+function fallbackToManual(){show('errorDiv');}
+
+function searchCity(){
+  const val=document.getElementById('cityInput').value.trim();
+  if(!val)return;
+  show('loadingDiv');
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(val)+'&format=json&limit=1&accept-language=en')
+    .then(r=>r.json())
+    .then(res=>{
+      if(res&&res.length>0) buildApp(parseFloat(res[0].lat),parseFloat(res[0].lon),val,'');
+      else show('errorDiv');
+    })
+    .catch(()=>show('errorDiv'));
+}
+
+function loadCity(city,cc){
+  show('loadingDiv');
+  fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(city)+'&format=json&limit=1&accept-language=en')
+    .then(r=>r.json())
+    .then(res=>{
+      if(res&&res.length>0) buildApp(parseFloat(res[0].lat),parseFloat(res[0].lon),city,cc);
+      else show('errorDiv');
+    })
+    .catch(()=>show('errorDiv'));
+}
+
+function loadData(lat, lon, cityLabel, cc){
+  const geoUrl=`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=en`;
+  fetch(geoUrl)
+    .then(r=>r.json())
+    .then(geo=>{
+      const a=geo.address||{};
+      const city=cityLabel||(a.city||a.town||a.village||a.county||'Unknown')+', '+(a.country||'');
+      const code=(cc||(a.country_code||'')).toUpperCase();
+      buildApp(lat, lon, city, code);
+    })
+    .catch(()=>buildApp(lat, lon, cityLabel||'Unknown', cc||''));
+}
+
+function buildApp(lat, lon, city, code){
+  const method=METHODS[code]||{id:3,name:'Muslim World League'};
+  const now=new Date();
+  const ds=`${now.getDate()}-${now.getMonth()+1}-${now.getFullYear()}`;
+  const url=`https://api.aladhan.com/v1/timings/${ds}?latitude=${lat}&longitude=${lon}&method=${method.id}`;
+
+  fetch(url)
+    .then(r=>r.json())
+    .then(d=>{
+      if(d.code===200){
+        render(d.data, city, method.name);
+        show('content');
+      } else show('errorDiv');
+    })
+    .catch(()=>show('errorDiv'));
+}
+
+function toDate(str){
+  const [h,m]=str.substring(0,5).split(':').map(Number);
+  const n=new Date();
+  return new Date(n.getFullYear(),n.getMonth(),n.getDate(),h,m,0);
+}
+
+function fmt12(str){
+  const [h,m]=str.substring(0,5).split(':').map(Number);
+  const ap=h>=12?'PM':'AM';
+  return `${(h%12||12).toString().padStart(2,'0')}:${m.toString().padStart(2,'0')} ${ap}`;
+}
+
+function render(data, city, methodName){
+  // Dates
+  const now=new Date();
+  document.getElementById('gregDate').textContent=`${DAYS[now.getDay()]}, ${now.getDate()} ${MONTHS[now.getMonth()]} ${now.getFullYear()}`;
+  if(data.date&&data.date.hijri){
+    const h=data.date.hijri;
+    document.getElementById('hijriDate').textContent=`${h.day} ${h.month.en} ${h.year} AH`;
+  }
+  document.getElementById('cityName').textContent=city;
+  document.getElementById('methodBadge').textContent='⊞ '+methodName;
+
+  // Times
+  const times={};
+  PRAYERS.forEach(p=>times[p.key]=data.timings[p.key].substring(0,5));
+
+  // Active / Next
+  const nowMs=now.getTime();
+  let activeIdx=-1, nextIdx=0;
+  for(let i=PRAYERS.length-1;i>=0;i--){
+    if(nowMs>=toDate(times[PRAYERS[i].key]).getTime()){
+      activeIdx=i;
+      nextIdx=(i+1)%PRAYERS.length;
+      break;
+    }
+  }
+  if(activeIdx===-1){activeIdx=PRAYERS.length-1;nextIdx=0;}
+
+  // Next prayer time for countdown
+  nextPrayerTime=toDate(times[PRAYERS[nextIdx].key]);
+  if(nowMs>nextPrayerTime.getTime()) nextPrayerTime=new Date(nextPrayerTime.getTime()+86400000);
+
+  // Render cards
+  const list=document.getElementById('prayerList');
+  list.innerHTML='';
+  PRAYERS.forEach((p,i)=>{
+    const card=document.createElement('div');
+    card.className='prayer-card'+(i===activeIdx?' active':i===nextIdx?' next-up':'');
+    let statusHtml='';
+    if(i===activeIdx) statusHtml='<div class="p-status status-active">● Active</div>';
+    else if(i===nextIdx) statusHtml='<div class="p-status status-next">Up Next</div>';
+    card.innerHTML=`
+      <div class="p-icon-wrap">${p.icon}</div>
+      <div class="p-info">
+        <div class="p-name-en">${p.key}</div>
+        <div class="p-name-ar">${p.ar}</div>
+      </div>
+      <div class="p-right">
+        <div class="p-time">${fmt12(times[p.key])}</div>
+        ${statusHtml}
+      </div>`;
+    list.appendChild(card);
+  });
+
+  // Countdown
+  document.getElementById('nextName').textContent=PRAYERS[nextIdx].key.toUpperCase();
+  if(timerInterval) clearInterval(timerInterval);
+  function tick(){
+    const diff=nextPrayerTime.getTime()-new Date().getTime();
+    if(diff<=0){init();return;}
+    const h=Math.floor(diff/3600000);
+    const m=Math.floor((diff%3600000)/60000);
+    document.getElementById('cdTime').textContent=`${h}h ${m.toString().padStart(2,'0')}m`;
+  }
+  tick();
+  timerInterval=setInterval(tick,30000);
+}
+
+init();
+</script>
+</body>
+</html>
